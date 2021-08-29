@@ -1,10 +1,11 @@
 import os
 import warnings
 
+import matplotlib.pyplot as plt
 import numpy as np
-import tqdm
 from skimage.io import imread
 from skimage.transform import resize
+from tqdm import tqdm
 
 IMG_WIDTH = 128
 IMG_HEIGHT = 128
@@ -49,3 +50,20 @@ for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
     X_test[n] = img
 
 print('Done!')
+
+plt.figure(figsize=(20,16))
+x, y = 12,4
+for i in range(y):  
+    for j in range(x):
+        plt.subplot(y*2, x, i*2*x+j+1)
+        pos = i*120 + j*10
+        plt.imshow(X_train[pos])
+        plt.title('Image #{}'.format(pos))
+        plt.axis('off')
+        plt.subplot(y*2, x, (i*2+1)*x+j+1)
+        
+        plt.imshow(np.squeeze(Y_train[pos]))
+        plt.title('Mask #{}'.format(pos))
+        plt.axis('off')
+        
+plt.show()
