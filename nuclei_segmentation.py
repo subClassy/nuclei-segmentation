@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.io import imread
 from skimage.transform import resize
+from tensorflow.keras import backend as K
 from tqdm import tqdm
 
 IMG_WIDTH = 128
@@ -67,3 +68,39 @@ for i in range(y):
         plt.axis('off')
         
 plt.show()
+
+def iou_coef(y_true, y_pred, smooth=1):
+    intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
+    union = K.sum((y_true,-1) + K.sum(y_pred,-1) - intersection)
+    return (intersection + smooth) / ( union + smooth)
+
+def iou_coef_loss(y_true, y_pred):
+    return -iou_coef(y_true, y_pred)
+
+inputs = Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
+s = Lambda(lambda x: x / 255) (inputs)
+
+c1 = Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (s)
+c1 = Dropout(0.1) (c1)
+c1 = Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (c1)
+p1 = MaxPooling2D((2, 2)) (c1)
+
+c2 = Conv2D(32, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (p1)
+c2 = Dropout(0.1) (c2)
+c2 = Conv2D(32, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (c2)
+p2 = MaxPooling2D((2, 2)) (c2)
+
+c3 = Conv2D(64, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (p2)
+c3 = Dropout(0.2) (c3)
+c3 = Conv2D(64, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (c3)
+p3 = MaxPooling2D((2, 2)) (c3)
+
+c4 = Conv2D(128, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (p3)
+c4 = Dropout(0.2) (c4)
+c4 = Conv2D(128, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (c4)
+p4 = MaxPooling2D(pool_size=(2, 2)) (c4)
+
+c5 = Conv2D(256, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (p4)
+c5 = Dropout(0.3) (c5)
+c5 = Conv2D(256, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (c5)
+
