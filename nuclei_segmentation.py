@@ -3,9 +3,11 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
 from skimage.io import imread
 from skimage.transform import resize
 from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.layers import (Conv2D, Conv2DTranspose, Dropout, Input,
                                      Lambda, MaxPooling2D, concatenate)
 from tensorflow.keras.models import Model
@@ -136,3 +138,24 @@ outputs = Conv2D(1, (1, 1), activation='sigmoid') (c9)
 model = Model(inputs=[inputs], outputs=[outputs])
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[iou_coef_loss])
 model.summary()
+
+tf.compat.v1.disable_eager_execution()
+
+# Initialize our callbacks
+model_path = "nuclei_finder_unet_1.h5"
+checkpoint = ModelCheckpoint(model_path,
+                             monitor="val_loss",
+                             mode="min",
+                             save_best_only = True,
+                             verbose=1)
+
+earlystop = EarlyStopping(monitor = 'val_loss', 
+                          min_delta = 0, 
+                          patience = 5,
+                          verbose = 1,
+                          restore_best_weights = True)
+
+# Fit our model 
+results = model.fit(X_train, Y_train, validation_split=0.1,
+                    batch_size=16, epochs=10, 
+                    callbacks=[earlystop, checkpoint])
